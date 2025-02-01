@@ -21,15 +21,17 @@ func main() {
 	conf.Load()
 	conf.Parse()
 
+	// - run migrations and exit if mode is migrate
 	if conf.Mode == config.ModeMigrate {
 		if err := migrations.Run(ctx, db.Get(db.WithConfig(conf.DB))); err != nil {
 			slog.Error("unable to run migrations", "error", err.Error())
-
 			os.Exit(1)
 		}
 
 		os.Exit(0)
 	}
+
+	// - run the app based on mode, exit 1 on error else wait for signal
 
 	quit := make(chan os.Signal, 1)
 	app := graceful.New()
