@@ -4,8 +4,7 @@ services:
   #
   # - temporal: for workflow management
   # - zitadel: for identity and access management (maybe)
-  # - questdb: for time series data (evalutation)
-  # - clickhouse: for time series data (evaluation)
+  # - clickhouse: for analytics
   ################################
 
   # temporal.io
@@ -64,16 +63,17 @@ services:
     container_name: clickhouse
     image: clickhouse/clickhouse-server:24.8
     environment:
-      CLICKHOUSE_DB: ${PULSE__CH__NAME}
+      CLICKHOUSE_DB: ${PULSE__NAME}
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
-      CLICKHOUSE_USER: ${PULSE__CH__USER}
-      CLICKHOUSE_PASSWORD: ${PULSE__CH__PASS}
+      CLICKHOUSE_USER: ${PULSE__USER}
+      CLICKHOUSE_PASSWORD: ${PULSE__PASS}
     ports:
-      - "6665:8123"
-      - "6666:9000"
+      - "8123:8123" # why do we need http port?
+      - "9000:9000"
     volumes:
       - clickhouse-data:/var/lib/clickhouse
       - clickhouse-logs:/var/log/clickhouse-server/
+    # command: ["--", "-L", "-", "-E", "-"] # docker run -it clickhouse/clickhouse-server:head -- -L - -E -
     networks:
       - ctrlplane
 

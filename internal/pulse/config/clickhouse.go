@@ -32,7 +32,7 @@ var (
 	// DefaultConfig defines the default configuration for connecting to a ClickHouse database.
 	DefaultConfig = Config{
 		Host:     "localhost", // Default host is localhost.
-		Port:     6666,        // Default port is 9000.  Native ClickHouse port.
+		Port:     9000,        // Default port is 9000.  Native ClickHouse port.
 		User:     "ctrlplane", // Default username.
 		Password: "ctrlplane", // Default password.
 		Name:     "ctrlplane", // Default database name.
@@ -51,7 +51,7 @@ func (c *Config) Validate() error {
 // instance's configuration parameters.  Includes a ping to verify the connection's health.  Returns an error if the connection
 // cannot be established or the ping fails. The context allows for connection timeout and cancellation.
 func (c *Config) connect(ctx context.Context) error {
-	slog.Info("pulse/clickhose: connecting clickhouse ...", "host", c.Host, "port", c.Port, "user", c.User, "name", c.Name)
+	slog.Info("pulse: connecting clickhouse ...", "host", c.Host, "port", c.Port, "user", c.User, "name", c.Name)
 
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{c.GetAddress()},
@@ -71,7 +71,7 @@ func (c *Config) connect(ctx context.Context) error {
 
 	c.conn = conn
 
-	slog.Info("pulse/clickhose: clickhouse connected.")
+	slog.Info("pulse: clickhouse connected.")
 
 	return nil
 }

@@ -25,7 +25,7 @@ type (
 		*Base    `json:"base"`  // Base workflow state.
 		Triggers BranchTriggers `json:"triggers"` // Branch triggers.
 
-		acts *activities.Repo
+		do *activities.Repo
 	}
 )
 
@@ -133,7 +133,7 @@ func (state *Repo) forward_to_branch(ctx workflow.Context, signal queues.Signal,
 	next := NewBranch(state.Repo, state.ChatLink, branch)
 	payload := &defs.SignalBranchPayload{Signal: signal, Repo: state.Repo, Branch: branch}
 
-	return workflow.ExecuteActivity(ctx, state.acts.ForwardToBranch, payload, event, next).Get(ctx, nil)
+	return workflow.ExecuteActivity(ctx, state.do.ForwardToBranch, payload, event, next).Get(ctx, nil)
 }
 
 // forward_to_trunk routes the signal to the trunk.
@@ -143,7 +143,7 @@ func (state *Repo) forward_to_trunk(ctx workflow.Context, signal queues.Signal, 
 	next := NewTrunk(state.Repo, state.ChatLink)
 	payload := &defs.SignalTrunkPayload{Signal: signal, Repo: state.Repo}
 
-	return workflow.ExecuteActivity(ctx, state.acts.ForwardToTrunk, payload, event, next).Get(ctx, nil)
+	return workflow.ExecuteActivity(ctx, state.do.ForwardToTrunk, payload, event, next).Get(ctx, nil)
 }
 
 // attempt_rebase rebases all branches with a trigger on the default branch.
@@ -173,8 +173,8 @@ func (state *Repo) attempt_rebase(ctx workflow.Context, push *events.Event[event
 func (state *Repo) Init(ctx workflow.Context) {
 	state.Base.Init(ctx)
 
-	if state.acts == nil {
-		state.acts = &activities.Repo{}
+	if state.do == nil {
+		state.do = &activities.Repo{}
 	}
 }
 

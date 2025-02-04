@@ -1,4 +1,4 @@
-package logs
+package gcp
 
 import (
 	"context"
@@ -17,29 +17,29 @@ const (
 )
 
 type (
-	// GoogleCloudHandler is an slog handler which adapts slog json handler to conform to Google Cloud Logging.
+	// SlogHandler is an slog handler which adapts slog json handler to conform to Google Cloud Logging.
 	// It is meant to be used with stdout as io.Writer.
-	GoogleCloudHandler struct {
+	SlogHandler struct {
 		handler slog.Handler // Underlying slog.Handler to delegate to.
 	}
 )
 
-// NewGoogleCloudHandler constructs a new GoogleCloudHandler.
+// NewSlogHandler constructs a new GoogleCloudHandler.
 //
 // It uses the provided io.Writer to write logs, and applies the specified slog.HandlerOptions.
 // It modifies the options to map standard keys to Google Cloud Logging keys, and uses a JSON formatter.
-func NewGoogleCloudHandler(writer io.Writer, options *slog.HandlerOptions) slog.Handler {
+func NewSlogHandler(writer io.Writer, options *slog.HandlerOptions) slog.Handler {
 	options.ReplaceAttr = replaceattr // Replace standard keys with Google Cloud Logging keys.
 
 	handler := slog.NewJSONHandler(writer, options) // Create a JSON-based handler.
 
-	return &GoogleCloudHandler{handler: handler} // Return a new GoogleCloudHandler.
+	return &SlogHandler{handler: handler} // Return a new GoogleCloudHandler.
 }
 
 // Enabled checks if the handler is enabled for the given context and level.
 //
 // It delegates to the underlying handler's Enabled method.
-func (h *GoogleCloudHandler) Enabled(ctx context.Context, level slog.Level) bool {
+func (h *SlogHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return h.handler.Enabled(ctx, level)
 }
 
@@ -47,22 +47,22 @@ func (h *GoogleCloudHandler) Enabled(ctx context.Context, level slog.Level) bool
 //
 // It enriches the record with trace context from the provided context, and then delegates to the underlying handler's
 // Handle method.
-func (h *GoogleCloudHandler) Handle(ctx context.Context, rec slog.Record) error {
+func (h *SlogHandler) Handle(ctx context.Context, rec slog.Record) error {
 	return h.handler.Handle(ctx, h.enrich(ctx, rec))
 }
 
 // WithAttrs returns a new handler with the specified attributes appended to the existing ones.
 //
 // It delegates to the underlying handler's WithAttrs method.
-func (h *GoogleCloudHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &GoogleCloudHandler{handler: h.handler.WithAttrs(attrs)}
+func (h *SlogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return &SlogHandler{handler: h.handler.WithAttrs(attrs)}
 }
 
 // WithGroup returns a new handler with the specified group name.
 //
 // It delegates to the underlying handler's WithGroup method.
-func (h *GoogleCloudHandler) WithGroup(name string) slog.Handler {
-	return &GoogleCloudHandler{handler: h.handler.WithGroup(name)}
+func (h *SlogHandler) WithGroup(name string) slog.Handler {
+	return &SlogHandler{handler: h.handler.WithGroup(name)}
 }
 
 // enrich adds trace context to the record.
@@ -73,7 +73,7 @@ func (h *GoogleCloudHandler) WithGroup(name string) slog.Handler {
 // # LINKS
 //   - https://cloud.google.com/trace/docs/trace-log-integration
 //   - https://cloud.google.com/logging/docs/view/correlate-logs#view-correlated-log-entries
-func (h *GoogleCloudHandler) enrich(ctx context.Context, record slog.Record) slog.Record {
+func (h *SlogHandler) enrich(ctx context.Context, record slog.Record) slog.Record {
 	rec := record.Clone()
 	span := trace.SpanFromContext(ctx)
 

@@ -12,7 +12,6 @@ import (
 	"go.breu.io/quantm/internal/core/kernel"
 	"go.breu.io/quantm/internal/core/repos/defs"
 	"go.breu.io/quantm/internal/core/repos/fns"
-	"go.breu.io/quantm/internal/events"
 	eventsv1 "go.breu.io/quantm/internal/proto/ctrlplane/events/v1"
 )
 
@@ -186,26 +185,6 @@ func (a *Branch) Rebase(ctx context.Context, payload *defs.RebasePayload) (*defs
 	}
 
 	return result, nil
-}
-
-// NotifyLinesExceeded notifies on chat if lines exceed a limit.
-func (a *Branch) NotifyLinesExceeded(ctx context.Context, event *events.Event[eventsv1.ChatHook, eventsv1.Diff]) error {
-	if err := kernel.Get().ChatHook(event.Context.Hook).NotifyLinesExceed(ctx, event); err != nil {
-		slog.Warn("unable to notify on chat", "error", err.Error())
-		return err
-	}
-
-	return nil
-}
-
-// NotifyMergeConflict notifies on chat if merge conflict message.
-func (a *Branch) NotifyMergeConflict(ctx context.Context, event *events.Event[eventsv1.ChatHook, eventsv1.Merge]) error {
-	if err := kernel.Get().ChatHook(event.Context.Hook).NotifyMergeConflict(ctx, event); err != nil {
-		slog.Warn("unable to notify on chat", "error", err.Error())
-		return err
-	}
-
-	return nil
 }
 
 // - Diff Helpers -

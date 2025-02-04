@@ -15,6 +15,9 @@ import (
 )
 
 type (
+	// Kernel is the implmentation of kernel.Repo interface.
+	//
+	// Please note that this must never be called from the workflows.
 	Kernel struct{}
 )
 

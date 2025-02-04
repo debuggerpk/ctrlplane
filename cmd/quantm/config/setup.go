@@ -18,6 +18,10 @@ import (
 	"go.breu.io/quantm/internal/pulse"
 )
 
+type (
+	ModeFn func(*graceful.Graceful) error
+)
+
 const (
 	ServiceGithub     = "github"
 	ServiceSlack      = "slack"
@@ -33,49 +37,16 @@ const (
 
 // Setup configures the application based on the provided config.
 func (c *Config) Setup(app *graceful.Graceful) error {
-	switch c.Mode {
-	case ModeMigrate:
-		c.SetupLogger()
+	modes := map[Mode]ModeFn{
+		ModeMigrate: c.migrate,
+		ModeWebhook: c.webhook,
+		ModeGRPC:    c.grpc,
+		ModeWorkers: c.workers,
+		ModeDefault: c.all,
+	}
 
-		if err := c.SetupDB(); err != nil {
-			return err
-		}
-
-	case ModeWebhook:
-		if err := c.SetupServices(app); err != nil {
-			return err
-		}
-
-		app.Add(ServiceWebhook, NewWebhookServer(), ServiceDurable)
-	case ModeGRPC:
-		if err := c.SetupServices(app); err != nil {
-			return err
-		}
-
-		app.Add(ServiceNomad, nomad.New(nomad.WithConfig(c.Nomad)), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
-	case ModeWorkers:
-		if err := c.SetupServices(app); err != nil {
-			return err
-		}
-
-		workers.Core()
-		workers.Hooks()
-
-		app.Add(ServiceCoreQueue, durable.OnCore(), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
-		app.Add(ServiceHooksQueue, durable.OnHooks(), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
-	case ModeDefault:
-		if err := c.SetupServices(app); err != nil {
-			return err
-		}
-
-		workers.Core()
-		workers.Hooks()
-
-		app.Add(ServiceWebhook, NewWebhookServer(), ServiceDurable)
-		app.Add(ServiceNomad, nomad.New(nomad.WithConfig(c.Nomad)), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
-		app.Add(ServiceCoreQueue, durable.OnCore(), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
-		app.Add(ServiceHooksQueue, durable.OnHooks(), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
-	default:
+	if fn, ok := modes[c.Mode]; ok {
+		return fn(app)
 	}
 
 	return nil
@@ -173,6 +144,71 @@ func (c *Config) SetupPulse() error {
 	}
 
 	pulse.Get(pulse.WithConfig(c.Pulse))
+
+	return nil
+}
+
+// migrate configures the application for database migrations.
+func (c *Config) migrate(app *graceful.Graceful) error {
+	c.SetupLogger()
+
+	if err := c.SetupDB(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// webhook configures the application for webhook mode.
+func (c *Config) webhook(app *graceful.Graceful) error {
+	if err := c.SetupServices(app); err != nil {
+		return err
+	}
+
+	app.Add(ServiceWebhook, NewWebhookServer(), ServiceDurable)
+
+	return nil
+}
+
+// grpc configures the application for gRPC mode.
+func (c *Config) grpc(app *graceful.Graceful) error {
+	if err := c.SetupServices(app); err != nil {
+		return err
+	}
+
+	app.Add(ServiceNomad, nomad.New(nomad.WithConfig(c.Nomad)), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
+
+	return nil
+}
+
+// workers configures the application for worker mode.
+func (c *Config) workers(app *graceful.Graceful) error {
+	if err := c.SetupServices(app); err != nil {
+		return err
+	}
+
+	workers.Core()
+	workers.Hooks()
+
+	app.Add(ServiceCoreQueue, durable.OnCore(), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
+	app.Add(ServiceHooksQueue, durable.OnHooks(), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
+
+	return nil
+}
+
+// all configures the application with all services and modes.
+func (c *Config) all(app *graceful.Graceful) error {
+	if err := c.SetupServices(app); err != nil {
+		return err
+	}
+
+	workers.Core()
+	workers.Hooks()
+
+	app.Add(ServiceWebhook, NewWebhookServer(), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
+	app.Add(ServiceNomad, nomad.New(nomad.WithConfig(c.Nomad)), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
+	app.Add(ServiceCoreQueue, durable.OnCore(), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
+	app.Add(ServiceHooksQueue, durable.OnHooks(), ServiceKernel, ServiceDB, ServiceDurable, ServicePulse)
 
 	return nil
 }

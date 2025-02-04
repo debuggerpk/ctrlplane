@@ -10,7 +10,7 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/go-playground/validator/v10"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
@@ -33,7 +33,7 @@ type (
 		Password  string `json:"pass" koanf:"PASS" validate:"required"` // Database password.
 		EnableSSL bool   `json:"enable_ssl" koanf:"ENABLE_SSL"`         // Enable SSL.
 
-		conn *pgx.Conn // Database connection.
+		pool *pgxpool.Pool
 	}
 
 	// ConfigOption defines functional options for connection.
@@ -90,7 +90,7 @@ func (c *Config) ConnectionURI() string {
 
 // IsConnected checks if a database connection exists.
 func (c *Config) IsConnected() bool {
-	return c.conn != nil
+	return c.pool != nil
 }
 
 // Start establishes a database connection using retry logic.
@@ -142,17 +142,19 @@ func (c *Config) Start(ctx context.Context) error {
 //
 // Returns an error if the ping fails.
 func (c *Config) Ping(ctx context.Context) error {
-	return c.conn.Ping(ctx)
+	return c.pool.Ping(ctx)
 }
 
-func (c *Config) Get() *pgx.Conn {
-	return c.conn
+func (c *Config) Pool() *pgxpool.Pool {
+	return c.pool
 }
 
 // Stop closes the database connection.
 func (c *Config) Stop(ctx context.Context) error {
 	if c.IsConnected() {
-		c.conn.Close(ctx)
+		slog.Info("db: closing ...")
+
+		c.pool.Close()
 	} else {
 		slog.Warn("db: already closed.")
 	}
@@ -165,12 +167,13 @@ func (c *Config) Stop(ctx context.Context) error {
 // This function is used internally by the `Connect` method for retry logic. The returned function returns an error if the connection fails.
 func (c *Config) retryfn(ctx context.Context) func() error {
 	return func() error {
-		conn, err := pgx.Connect(ctx, c.ConnectionString())
+		// conn, err := pgx.Connect(ctx, c.ConnectionString())
+		pool, err := pgxpool.New(ctx, c.ConnectionString())
 		if err != nil {
 			return err
 		}
 
-		c.conn = conn
+		c.pool = pool
 
 		return nil
 	}

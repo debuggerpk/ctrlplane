@@ -32,7 +32,8 @@ type (
 		LatestCommit *eventsv1.Commit `json:"latest_commit"`
 
 		intervals BranchIntervals
-		acts      *activities.Branch
+		do        *activities.Branch
+		notify    *activities.Notify
 		done      bool
 	}
 )
@@ -116,7 +117,7 @@ func (state *Branch) OnRebase(ctx workflow.Context) durable.ChannelHandler {
 		path := state.clone(session, clone)
 
 		rebase := &defs.RebaseResult{}
-		_ = state.run(ctx, "rebase", state.acts.Rebase, &defs.RebasePayload{Rebase: event.Payload, Path: path}, rebase)
+		_ = state.run(ctx, "rebase", state.do.Rebase, &defs.RebasePayload{Rebase: event.Payload, Path: path}, rebase)
 
 		state.check_merge_conflict(session, event, rebase)
 
@@ -177,7 +178,7 @@ func (state *Branch) Init(ctx workflow.Context) {
 func (state *Branch) clone(ctx workflow.Context, payload *defs.ClonePayload) string {
 	_ = workflow.SideEffect(ctx, func(ctx workflow.Context) any { return uuid.New().String() }).Get(&payload.Path)
 
-	if err := state.run(ctx, "clone", state.acts.Clone, payload, &payload.Path); err != nil {
+	if err := state.run(ctx, "clone", state.do.Clone, payload, &payload.Path); err != nil {
 		state.logger.Error("clone: unable to clone", "error", err.Error())
 	}
 
@@ -185,7 +186,7 @@ func (state *Branch) clone(ctx workflow.Context, payload *defs.ClonePayload) str
 }
 
 func (state *Branch) remove_dir(ctx workflow.Context, path string) {
-	if err := state.run(ctx, "remove", state.acts.RemoveDir, path, nil); err != nil {
+	if err := state.run(ctx, "remove", state.do.RemoveDir, path, nil); err != nil {
 		state.logger.Error("remove: unable to remove directory", "error", err.Error())
 	}
 }
@@ -195,7 +196,7 @@ func (state *Branch) diff(ctx workflow.Context, path, base, sha string) *eventsv
 	payload := &defs.DiffPayload{Path: path, Base: base, SHA: sha}
 	result := &eventsv1.Diff{}
 
-	if err := state.run(ctx, "diff", state.acts.Diff, payload, result); err != nil {
+	if err := state.run(ctx, "diff", state.do.Diff, payload, result); err != nil {
 		state.logger.Error("diff: unable to calculate diff", "error", err.Error())
 	}
 
@@ -221,7 +222,7 @@ func (state *Branch) compare_diff(
 			)
 		}
 
-		if err := state.run(ctx, "line_exceed", state.acts.NotifyLinesExceeded, event, nil); err != nil {
+		if err := state.run(ctx, "line_exceed", state.notify.LinesExceeded, event, nil); err != nil {
 			state.logger.Error("lines_exceed: unable to to send", "error", err.Error())
 		}
 	}
@@ -252,7 +253,7 @@ func (state *Branch) check_merge_conflict(
 			)
 		}
 
-		if err := state.run(ctx, "merge_conflict", state.acts.NotifyMergeConflict, event, nil); err != nil {
+		if err := state.run(ctx, "merge_conflict", state.notify.MergeConflict, event, nil); err != nil {
 			state.logger.Error("merge_conflict: unable to to send", "error", err.Error())
 		}
 	}
@@ -264,5 +265,5 @@ func (state *Branch) notify_user(_ workflow.Context) error { return nil }
 func NewBranch(repo *entities.Repo, chat *entities.ChatLink, branch string) *Branch {
 	base := &Base{Repo: repo, ChatLink: chat}
 
-	return &Branch{Base: base, Branch: branch, acts: &activities.Branch{}}
+	return &Branch{Base: base, Branch: branch, do: &activities.Branch{}, notify: &activities.Notify{}}
 }
