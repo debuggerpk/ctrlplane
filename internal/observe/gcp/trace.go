@@ -1,4 +1,4 @@
-package trace
+package gcp
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 )
 
 type (
-	// CloudTraceContextKey defines a type for the Cloud Trace Context key.
-	CloudTraceContextKey string
+	// TracingContext defines a type for the Cloud Trace Context key.
+	TracingContext string
 )
 
 const (
@@ -16,13 +16,13 @@ const (
 	CloudTraceContextHeader = "X-Cloud-Trace-Context"
 
 	// TraceContextKey is the key for storing the trace ID in the request context.
-	TraceContextKey CloudTraceContextKey = "trace"
+	TraceContextKey TracingContext = "trace"
 
 	// SpanContextKey is the key for storing the span ID in the request context.
-	SpanContextKey CloudTraceContextKey = "span"
+	SpanContextKey TracingContext = "span"
 
 	// SampledContextKey is the key for storing the trace sampling flag in the request context.
-	SampledContextKey CloudTraceContextKey = "trace_sampled"
+	SampledContextKey TracingContext = "trace_sampled"
 )
 
 var (

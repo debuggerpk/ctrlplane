@@ -41,8 +41,8 @@
 
         # Development packages for use in the dev shell
         dev = [
-          pkgs.libpg_query # FIXME: probably not required anymore.
           pkgs.gomod2nix
+          pkgs.libpg_query # FIXME: probably not required anymore.
           (pkgs.callPackage ./tools/nix/pkgs/sqlc.nix {inherit buildGoModule;})
         ];
 

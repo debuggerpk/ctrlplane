@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5"
 
@@ -49,8 +50,10 @@ func Queries() *entities.Queries {
 //
 //	return nil
 func Transaction(ctx context.Context) (pgx.Tx, *entities.Queries, error) {
-	tx, err := Get().Get().Begin(ctx)
+	tx, err := Get().Pool().Begin(ctx)
 	if err != nil {
+		slog.Error("db: error creating transaction ...", "error", err.Error())
+
 		return nil, nil, err
 	}
 

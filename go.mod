@@ -33,9 +33,9 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250127172529-29210b9bc287
 )
 
-require github.com/google/go-github/v68 v68.0.0 // indirect
-
 require (
+	github.com/google/go-github/v68 v68.0.0 // indirect
+	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	cloud.google.com/go/compute/metadata v0.6.0
 	dario.cat/mergo v1.0.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect

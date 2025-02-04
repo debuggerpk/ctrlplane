@@ -5,7 +5,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"log/slog"
 	"net/http"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
@@ -35,11 +34,7 @@ func (cfg *Config) Validate() error {
 }
 
 // Start is a no-op function that satisfies the graceful Service interface.
-func (cfg *Config) Start(ctx context.Context) error {
-	slog.Info("hooks/github: configured", "app_id", cfg.AppID)
-
-	return nil
-}
+func (cfg *Config) Start(ctx context.Context) error { return nil }
 
 // Stop is a no-op function that satisfies the graceful Service interface.
 func (cfg *Config) Stop(ctx context.Context) error { return nil }

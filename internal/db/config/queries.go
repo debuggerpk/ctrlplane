@@ -28,7 +28,7 @@ func Queries() *entities.Queries {
 			_ = conn.Start(context.Background())
 		}
 
-		_qry = entities.New(Instance().conn)
+		_qry = entities.New(Instance().pool)
 	})
 
 	return _qry

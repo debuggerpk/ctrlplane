@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 
 	"github.com/knadh/koanf/providers/env"
@@ -69,8 +68,6 @@ func (c *Config) Load() {
 	if err := k.Unmarshal("", c); err != nil {
 		panic(err)
 	}
-
-	slog.Info("config loaded", "config.db", c.DB)
 }
 
 func New() *Config {
