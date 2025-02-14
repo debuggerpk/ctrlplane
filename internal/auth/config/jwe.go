@@ -87,7 +87,7 @@ func EncodeJWE(secret string, params JWTEncodeParams) (string, error) {
 
 // DecodeJWE decodes and validates a JWE token.
 //
-// It decrypts the token using the `Derive` function, unmarshals the payload, and validates the expiration time. If the
+// It decrypts the token using the `Derive` function, unmarshal the payload, and validates the expiration time. If the
 // token is valid, it returns the decoded claims.
 func DecodeJWE(secret, token string) (*Claims, error) {
 	enc, err := jose.Decrypt([]byte(token), jose.WithAlg(string(jose.A256CBC_HS512)), jose.WithPassword(Derive(secret)))

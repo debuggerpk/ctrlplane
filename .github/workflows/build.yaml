@@ -1,11 +1,10 @@
 name: build
 on:
   pull_request:
-    # For the develop branch only.
     branches:
       - main
-    # Execute the action on closed (merged) PR.
-    types: [closed]
+    types:
+      - closed
   push:
     branches:
       - main
@@ -50,12 +49,6 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
-      - name: GCP Kubernetes Engine Auth
-        uses: google-github-actions/get-gke-credentials@v2
-        with:
-          cluster_name: ${{ vars.GKE_CLUSTER }}
-          location: ${{ vars.GKE_CLUSTER_ZONE }}
-
       - name: Docker Buildx Cache
         id: go-cache
         uses: actions/cache@v4
@@ -80,36 +73,9 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          target: api
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
           tags: |
-            ${{ vars.GCP_ARTIFACT_REPOSITORY }}/api:latest
-            ${{ vars.GCP_ARTIFACT_REPOSITORY }}/api:${{ steps.short.outputs.short_sha }}
-
-      - name: Build/Push - Mothership
-        id: build-mothership
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          target: mothership
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          push: true
-          tags: |
-            ${{ vars.GCP_ARTIFACT_REPOSITORY }}/mothership:latest
-            ${{ vars.GCP_ARTIFACT_REPOSITORY }}/mothership:${{ steps.short.outputs.short_sha }}
-
-      - name: Build/Push - Migrate
-        id: build-migrate
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          target: migrate
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          push: true
-          tags: |
-            ${{ vars.GCP_ARTIFACT_REPOSITORY }}/migrate:latest
-            ${{ vars.GCP_ARTIFACT_REPOSITORY }}/migrate:${{ steps.short.outputs.short_sha }}
+            ${{ vars.GCP_ARTIFACT_REPOSITORY }}/quantm:lastest
+            ${{ vars.GCP_ARTIFACT_REPOSITORY }}/quantm:${{ steps.short.outputs.short_sha }}
