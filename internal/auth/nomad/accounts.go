@@ -2,6 +2,7 @@ package nomad
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -29,7 +30,7 @@ func (s *AccountService) GetAccountByProviderAccountID(
 
 	account, err := db.Queries().GetOAuthAccountByProviderAccountID(ctx, params)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, erratic.NewNotFoundError(erratic.AuthModule).
 				AddHint("account_id", params.ProviderAccountID).
 				AddHint("provider", params.Provider)
@@ -95,7 +96,7 @@ func (s *AccountService) GetAccountByID(
 
 	account, err := db.Queries().GetOAuthAccountByID(ctx, id)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, erratic.NewNotFoundError(erratic.AuthModule, "account").AddHint("id", req.Msg.GetId())
 		}
 
